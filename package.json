@@ -57,7 +57,8 @@
     ]
   },
   "dependencies": {
-    "lodash.assign": "^3.2.0"
+    "lodash.assign": "^3.2.0",
+    "lodash.some": "^3.2.3"
   },
   "files": [
     "lib"

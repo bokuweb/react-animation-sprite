@@ -2,8 +2,12 @@ import React, {Component} from 'react';
 import AnimationSprite from '../../src';
 
 export default class Example extends Component{
-  handleOnclick() {
+  handleOnclick1() {
     this.refs.sprite1.start();
+  }
+
+  handleOnclick2() {
+    this.refs.sprite2.start();
   }
 
   render() {
@@ -14,7 +18,14 @@ export default class Example extends Component{
                          name="sprite1"
                          width={20}
                          height={20}
-                         onClick={this.handleOnclick.bind(this)} >
+                         onClick={this.handleOnclick1.bind(this)} >
+        </AnimationSprite>
+        <AnimationSprite customClass="item"
+                         ref="sprite2"
+                         name="sprite2"
+                         width={20}
+                         height={20}
+                         onClick={this.handleOnclick2.bind(this)} >
         </AnimationSprite>
       </div>
     );
