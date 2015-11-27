@@ -4,6 +4,9 @@ import assign from 'lodash.assign';
 export default class AnimationSprite extends Component{
   constructor(props) {
     super(props);
+    this.state = {
+      isRunning: false
+    }
     const ua = window.navigator.userAgent.toLowerCase();
     const styleSheet = document.styleSheets[0];
     if (ua.indexOf('msie') !== -1 | ua.indexOf('trident') !== -1) {
@@ -39,35 +42,50 @@ export default class AnimationSprite extends Component{
   }
 
   onAnimationEnd(name, event) {
+    this.setState({isRunning: false});
     console.log(name);
   }
 
   start() {
-
+    this.setState({isRunning: true});
   }
 
   render() {
     const {width, height} = this.props;
-    const style = {
-      width,
-      height,
-      backgroundColor: "#333",
-      WebkitAnimationName : "anim",
-      WebkitAnimationDuration : "1400ms",
-      WebkitAnimationTimingFunction : "ease-in-out",
-      MozAnimationName : "anim",
-      MozAnimationDuration : "1400ms",
-      MozAnimationTimingFunction : "ease-in-out",
-      animationName : "anim",
-      animationDuration : "1400ms",
-      animationTimingFunction : "ease-in-out"
-    }
-
-
+    const {isRunning} = this.state;
+    const style = {width, height};
+    const animation = (isRunning)
+      ? {
+          WebkitAnimationName : "anim",
+          WebkitAnimationDuration : "1400ms",
+          WebkitAnimationTimingFunction : "ease-in-out",
+          WebkitAnimationPlayState : "running",
+          MozAnimationName : "anim",
+          MozAnimationDuration : "1400ms",
+          MozAnimationTimingFunction : "ease-in-out",
+          animationName : "anim",
+          animationDuration : "1400ms",
+          animationTimingFunction : "ease-in-out",
+          animationPlayState : "running"
+        }
+      : {
+          WebkitAnimationName : "anim",
+          WebkitAnimationDuration : "1400ms",
+          WebkitAnimationTimingFunction : "ease-in-out",
+          WebkitAnimationPlayState : "paused",
+          MozAnimationName : "anim",
+          MozAnimationDuration : "1400ms",
+          MozAnimationTimingFunction : "ease-in-out",
+          animationName : "anim",
+          animationDuration : "1400ms",
+          animationTimingFunction : "ease-in-out",
+          animationPlayState : "paused"
+      };
     return (
       <div ref='animationSprite'
-           style={assign({position:"relative"}, this.props.customStyle, style)}
-           className={this.props.customClass} >
+           style={assign({}, this.props.customStyle, style, animation)}
+           className={this.props.customClass}
+           onClick={this.props.onClick} >
         {this.props.children}
       </div>
     );

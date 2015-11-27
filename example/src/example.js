@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import AnimationSprite from '../../src';
 
 export default class Example extends Component{
-  componentDidMount() {
+  handleOnclick() {
     this.refs.sprite1.start();
   }
 
@@ -13,7 +13,8 @@ export default class Example extends Component{
                          ref="sprite1"
                          name="sprite1"
                          width={20}
-                         height={20} >
+                         height={20}
+                         onClick={this.handleOnclick.bind(this)} >
         </AnimationSprite>
       </div>
     );
