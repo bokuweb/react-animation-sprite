@@ -4,11 +4,18 @@ import assign from 'lodash.assign';
 export default class AnimationSprite extends Component{
   constructor(props) {
     super(props);
-    this.state = {status: 'paused'};
+    this.state = {isRunning: false, isEnd:true};
     this.appendAnimationRule();
     window.addEventListener('webkitAnimationEnd', this.onAnimationEnd.bind(this, this.props.name));
     window.addEventListener('animationend', this.onAnimationEnd.bind(this, this.props.name));
   }
+
+  //componentDidUpdate() {
+  //  if (this.state.isEnd && !this.state.isRunning) {
+  //    this.setState({isRunning: true, isEnd:false});
+  //    this.forceUpdate();
+  //  }
+  // }
 
   appendAnimationRule() {
     const ua = window.navigator.userAgent.toLowerCase();
@@ -43,27 +50,22 @@ export default class AnimationSprite extends Component{
   }
 
   onAnimationEnd(name, event) {
-    this.setState({status: 'stop'});
+    this.setState({isEnd: true});
   }
 
   start() {
-    this.setState({status: 'runnning'});
+    if (this.state.isRunning && !this.state.isEnd) return;
+    this.setState({isRunning: false});
+    // HACK
+    setTimeout(() => this.setState({isRunning: true, isEnd: false}), 50);
   }
 
   render() {
     const {width, height, name} = this.props;
-    const {status} = this.state;
+    const {isRunning} = this.state;
     const style = {width, height};
-    let animation;
-    if (status === 'paused') {
-      animation = {
-          animationName : "anim" + name,
-          animationDuration : "1400ms",
-          animationTimingFunction : "ease-in-out",
-          animationPlayState : "paused"
-      }
-    } else if (status === 'runnning') {
-      animation = {
+    const animation = (isRunning)
+      ? {
           WebkitAnimationName : "anim" + name,
           WebkitAnimationDuration : "1400ms",
           WebkitAnimationTimingFunction : "ease-in-out",
@@ -75,16 +77,20 @@ export default class AnimationSprite extends Component{
           animationDuration : "1400ms",
           animationTimingFunction : "ease-in-out",
           animationPlayState : "running"
-      }
-    } else if (status === 'stop') {
-      animation = {
-        WebkitAnimationName : "none",
-        MozAnimationName : "none",
-        animationName : "none",
-        animationDuration : "1400ms"
-      }
-    }
-
+        }
+      : {
+        WebkitAnimationName : "",
+        WebkitAnimationDuration : "1400ms",
+        WebkitAnimationTimingFunction : "ease-in-out",
+        WebkitAnimationPlayState : "paused",
+        MozAnimationName : "",
+        MozAnimationDuration : "1400ms",
+        MozAnimationTimingFunction : "ease-in-out",
+        animationName : "",
+        animationDuration : "1400ms",
+        animationTimingFunction : "ease-in-out",
+        animationPlayState : "paused"
+      };
     return (
       <div ref='animationSprite'
            style={assign({}, this.props.customStyle, style, animation)}
