@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, {Component, PropTypes} from 'react';
+import assign from 'lodash.assign';
 
 const FPS = 1000 / 60;
 const requestAnimationFrame = window.requestAnimationFrame
@@ -19,7 +20,8 @@ export default class AnimationSprite extends Component {
       frame: {
         row: 0,
         column: 0
-      }
+      },
+      hideUntilStart: props.hideUntilStart
     }
     let image = new Image();
     image.src = this.props.src;
@@ -29,15 +31,17 @@ export default class AnimationSprite extends Component {
     }
   }
 
-  update() {
+  update(time) {
+    console.log(time);
     let {row, column} = this.state.frame;
     if (++row >= this.row) {
       row = 0;
       if (++column >= this.column) {
         column = 0;
-        console.log("end");
         cancelAnimationFrame(this.timerId);
         this.timerId = null;
+        this.setState({hideUntilStart: this.props.hideUntilStart});
+        this.props.onAnimationEnd(this.props.name);
       }
     }
     this.setState({frame : {row, column}});
@@ -46,20 +50,42 @@ export default class AnimationSprite extends Component {
 
   start() {
     if (this.timerId) return;
+    this.setState({hideUntilStart: false});
     this.timerId = requestAnimationFrame(this.update.bind(this), FPS);
+  }
+
+  stop() {
+    if (!this.timerId) return;
+    cancelAnimationFrame(this.timerId);
+    this.setState({frame : {row: 0, column: 0}, hideUntilStart: this.props.hideUntilStart});
+  }
+
+  pause() {
+    if (this.timerId) cancelAnimationFrame(this.timerId);
   }
 
   render() {
     const {width, height, src} = this.props;
-    const {row, column} = this.state.frame;
+    const {frame, hideUntilStart} = this.state;
     const style = {
       width,
       height,
       backgroundImage: `url(${src})`,
-      backgroundPosition: `${row*width}px ${column*height}px`
+      backgroundPosition: `${frame.row*width}px ${frame.column*height}px`,
+      visibility: (hideUntilStart) ? 'hidden' : 'visible'
     };
     return (
-      <div style={style} onClick={this.props.onClick} />
+      <div
+        style={assign({}, this.props.customStyle, style)}
+        onClick={this.props.onClick} />
     );
   }
 }
+
+AnimationSprite.propTypes = {
+  onClick: PropTypes.func,
+  onDoubleClick: PropTypes.func,
+  width: PropTypes.number.isRequired,
+  height: PropTypes.number.isRequired
+};
+
