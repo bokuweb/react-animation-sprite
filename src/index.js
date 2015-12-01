@@ -1,110 +1,65 @@
-import React, {Component, PropTypes} from 'react';
-import assign from 'lodash.assign';
+import React, { Component } from 'react';
 
-export default class AnimationSprite extends Component{
+const FPS = 1000 / 60;
+const requestAnimationFrame = window.requestAnimationFrame
+                           || window.webkitRequestAnimationFrame
+                           || window.mozRequestAnimationFrame
+                           || window.msRequestAnimationFrame
+                           || window.setTimeout;
+
+const cancelAnimationFrame = window.cancelAnimationFrame
+                          || window.mozCancelAnimationFrame
+                          || window.webkitCancelAnimationFrame
+                          || window.msCancelAnimationFrame;
+
+export default class AnimationSprite extends Component {
   constructor(props) {
     super(props);
-    this.state = {isRunning: false, isEnd:true};
-    this.appendAnimationRule();
-    window.addEventListener('webkitAnimationEnd', this.onAnimationEnd.bind(this, this.props.name));
-    window.addEventListener('animationend', this.onAnimationEnd.bind(this, this.props.name));
-  }
-
-  //componentDidUpdate() {
-  //  if (this.state.isEnd && !this.state.isRunning) {
-  //    this.setState({isRunning: true, isEnd:false});
-  //    this.forceUpdate();
-  //  }
-  // }
-
-  appendAnimationRule() {
-    const ua = window.navigator.userAgent.toLowerCase();
-    const styleSheet = document.styleSheets[0];
-    const {name} = this.props;
-    if (ua.indexOf('msie') !== -1 | ua.indexOf('trident') !== -1) {
-      const keyframes =
-       `@keyframes anim${name} {
-          10% {transform:scale(0.75) rotateY(0deg); }
-          90% {transform:scale(0.75) rotateY(90deg); }
-          100% {transform:scale(1) rotateY(90deg); }
-        }`;
-      styleSheet.insertRule(keyframes, styleSheet.rules.length-1);
-    }else if (ua.indexOf('chrome') !== -1 || ua.indexOf('safari') !== -1 || ua.indexOf('safari') !== -1) {
-      const keyframes =
-        `@-webkit-keyframes anim${name} {
-          10% {-webkit-transform:scale(0.75) rotateY(0deg); }
-          90% {-webkit-transform:scale(0.75) rotateY(90deg); }
-          100% {-webkit-transform:scale(1) rotateY(90deg); }
-        }`;
-      styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-    }else if (ua.indexOf('safari') !== -1) {
-    }else if (ua.indexOf('firefox') !== -1) {
-      const keyframes =
-        `@-moz-keyframes anim${name} {
-          10% {-moz-transform:scale(0.75) rotateY(0deg); }
-          90% {-moz-transform:scale(0.75) rotateY(90deg); }
-          100% {-moz-transform:scale(1) rotateY(90deg); }
-        }`;
-      styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+    this.state = {
+      frame: {
+        row: 0,
+        column: 0
+      }
+    }
+    let image = new Image();
+    image.src = this.props.src;
+    image.onload = () => {
+      this.row = image.width / this.props.width;
+      this.column = image.height / this.props.height;
     }
   }
 
-  onAnimationEnd(name, event) {
-    this.setState({isEnd: true});
+  update() {
+    let {row, column} = this.state.frame;
+    if (++row >= this.row) {
+      row = 0;
+      if (++column >= this.column) {
+        column = 0;
+        console.log("end");
+        cancelAnimationFrame(this.timerId);
+        this.timerId = null;
+      }
+    }
+    this.setState({frame : {row, column}});
+    if (this.timerId) requestAnimationFrame(this.update.bind(this), FPS);
   }
 
   start() {
-    if (this.state.isRunning && !this.state.isEnd) return;
-    this.setState({isRunning: false});
-    // HACK
-    setTimeout(() => this.setState({isRunning: true, isEnd: false}), 50);
+    if (this.timerId) return;
+    this.timerId = requestAnimationFrame(this.update.bind(this), FPS);
   }
 
   render() {
-    const {width, height, name} = this.props;
-    const {isRunning} = this.state;
-    const style = {width, height};
-    const animation = (isRunning)
-      ? {
-          WebkitAnimationName : "anim" + name,
-          WebkitAnimationDuration : "1400ms",
-          WebkitAnimationTimingFunction : "ease-in-out",
-          WebkitAnimationPlayState : "running",
-          MozAnimationName : "anim" + name,
-          MozAnimationDuration : "1400ms",
-          MozAnimationTimingFunction : "ease-in-out",
-          animationName : "anim" + name,
-          animationDuration : "1400ms",
-          animationTimingFunction : "ease-in-out",
-          animationPlayState : "running"
-        }
-      : {
-        WebkitAnimationName : "",
-        WebkitAnimationDuration : "1400ms",
-        WebkitAnimationTimingFunction : "ease-in-out",
-        WebkitAnimationPlayState : "paused",
-        MozAnimationName : "",
-        MozAnimationDuration : "1400ms",
-        MozAnimationTimingFunction : "ease-in-out",
-        animationName : "",
-        animationDuration : "1400ms",
-        animationTimingFunction : "ease-in-out",
-        animationPlayState : "paused"
-      };
+    const {width, height, src} = this.props;
+    const {row, column} = this.state.frame;
+    const style = {
+      width,
+      height,
+      backgroundImage: `url(${src})`,
+      backgroundPosition: `${row*width}px ${column*height}px`
+    };
     return (
-      <div ref='animationSprite'
-           style={assign({}, this.props.customStyle, style, animation)}
-           className={this.props.customClass}
-           onClick={this.props.onClick} >
-        {this.props.children}
-      </div>
+      <div style={style} onClick={this.props.onClick} />
     );
   }
 }
-
-AnimationSprite.propTypes = {
-  customStyle: PropTypes.object,
-  customClass: PropTypes.string,
-  width: PropTypes.number,
-  height: PropTypes.number,
-};
