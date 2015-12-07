@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import assign from 'lodash.assign';
+import assign from 'react/lib/Object.assign';
 
 const FPS = 1000 / 60;
 const requestAnimationFrame = window.requestAnimationFrame
@@ -17,11 +17,8 @@ export default class AnimationSprite extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      frame: {
-        row: 0,
-        column: 0
-      },
-      hideUntilStart: props.hideUntilStart
+      frame: {row: 0, column: 0},
+      hide: props.hideUntilStart
     }
     let image = new Image();
     image.src = this.props.src;
@@ -31,8 +28,12 @@ export default class AnimationSprite extends Component {
     }
   }
 
+  componentDidMount() {
+    if (this.props.autoStart) this.start();
+  }
+
   update(time) {
-    console.log(time);
+    const {onAnimationEnd, name, hideUntilStart} = this.props;
     let {row, column} = this.state.frame;
     if (++row >= this.row) {
       row = 0;
@@ -40,8 +41,9 @@ export default class AnimationSprite extends Component {
         column = 0;
         cancelAnimationFrame(this.timerId);
         this.timerId = null;
-        this.setState({hideUntilStart: this.props.hideUntilStart});
-        this.props.onAnimationEnd(this.props.name);
+        this.setState({hide:hideUntilStart});
+        if (onAnimationEnd) onAnimationEnd(name);
+        return;
       }
     }
     this.setState({frame : {row, column}});
@@ -50,14 +52,15 @@ export default class AnimationSprite extends Component {
 
   start() {
     if (this.timerId) return;
-    this.setState({hideUntilStart: false});
+    this.setState({hide: false});
     this.timerId = requestAnimationFrame(this.update.bind(this), FPS);
   }
 
   stop() {
     if (!this.timerId) return;
+    const {hideUntilStart} = this.props;
     cancelAnimationFrame(this.timerId);
-    this.setState({frame : {row: 0, column: 0}, hideUntilStart: this.props.hideUntilStart});
+    this.setState({frame : {row: 0, column: 0}, hideUntilStart});
   }
 
   pause() {
@@ -65,19 +68,23 @@ export default class AnimationSprite extends Component {
   }
 
   render() {
-    const {width, height, src} = this.props;
-    const {frame, hideUntilStart} = this.state;
+    const {width, height, src, customClass, customStyle, onClick} = this.props;
+    const {frame, hide} = this.state;
     const style = {
       width,
       height,
       backgroundImage: `url(${src})`,
       backgroundPosition: `${frame.row*width}px ${frame.column*height}px`,
-      visibility: (hideUntilStart) ? 'hidden' : 'visible'
+      visibility: (hide) ? 'hidden' : 'visible'
     };
+
     return (
       <div
-        style={assign({}, this.props.customStyle, style)}
-        onClick={this.props.onClick} />
+        className={customClass}
+        style={assign({}, customStyle, style)}
+        onClick={onClick} >
+        {this.props.children}
+      </div>
     );
   }
 }
