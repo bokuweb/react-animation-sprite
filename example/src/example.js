@@ -4,37 +4,56 @@ import AnimationSprite from '../../src';
 export default class Example extends Component{
   constructor() {
     super();
+    this.state = {sprites: []};
+    window.addEventListener('mousedown', this.start.bind(this));
+    window.addEventListener('touchstart', this.start.bind(this));
   }
 
-  handleOnclick1() {
-    this.refs.sprite1.start();
+  start(e) {
+    let {sprites} = this.state;
+    sprites.push({
+      x:e.clientX,
+      y:e.clientY,
+      id:sprites.length
+    });
+    this.setState({sprites});
   }
 
   handleAnimationEnd(name) {
     console.log(`${name} animation end!!`);
+    let {sprites} = this.state;
+    sprites.splice(name, 1);
+    this.setState({sprites});
+  }
+
+  getSprites(sprites) {
+    if (sprites.length === 0) return <div />;
+    return sprites.map((sprite, i) => {
+      return (
+        <AnimationSprite
+          key={i}
+          customStyle={{
+            position:"absolute",
+            left:sprite.x-80,
+            top:sprite.y-80
+          }}
+          ref={sprite.id}
+          name={sprite.id}
+          src="img/effect.png"
+          width={160}
+          height={160}
+          hideUntilStart={true}
+          autoStart={true}
+          onAnimationEnd={this.handleAnimationEnd.bind(this)} >
+        </AnimationSprite>
+      );
+    });
   }
 
   render() {
     return (
       <div>
-        <AnimationSprite
-          customClass="item"
-          ref="sprite1"
-          name="sprite1"
-          src="img/effect.png"
-          width={160}
-          height={160}
-          hideUntilStart={true}
-          onAnimationEnd={this.handleAnimationEnd.bind(this)} >
-        </AnimationSprite>
-        <AnimationSprite customClass="item"
-          ref="sprite2"
-          src="img/effect.png"
-          width={160}
-          height={160}
-          hideUntilStart={false}
-          onClick={this.handleOnclick1.bind(this)} >
-        </AnimationSprite>
+        {this.getSprites(this.state.sprites)}
       </div>
     );
   }
