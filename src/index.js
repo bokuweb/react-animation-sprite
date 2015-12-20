@@ -19,13 +19,13 @@ export default class AnimationSprite extends Component {
     this.state = {
       frame: {row: 0, column: 0},
       hide: props.hideUntilStart
-    }
+    };
     let image = new Image();
     image.src = this.props.src;
     image.onload = () => {
       this.row = image.width / this.props.width;
       this.column = image.height / this.props.height;
-    }
+    };
   }
 
   componentDidMount() {
@@ -35,9 +35,11 @@ export default class AnimationSprite extends Component {
   update(time) {
     const {onAnimationEnd, name, hideUntilStart} = this.props;
     let {row, column} = this.state.frame;
-    if (++row >= this.row) {
+
+    if (row >= this.row-1) {
       row = 0;
-      if (++column >= this.column) {
+      column += 1;
+      if (column >= this.column) {
         column = 0;
         cancelAnimationFrame(this.timerId);
         this.timerId = null;
@@ -45,7 +47,10 @@ export default class AnimationSprite extends Component {
         if (onAnimationEnd) onAnimationEnd(name);
         return;
       }
+    } else {
+      row += 1; 
     }
+    console.log(`row=${row}, column=${column}`)
     this.setState({frame : {row, column}});
     if (this.timerId) requestAnimationFrame(this.update.bind(this), FPS);
   }
@@ -74,10 +79,9 @@ export default class AnimationSprite extends Component {
       width,
       height,
       backgroundImage: `url(${src})`,
-      backgroundPosition: `${frame.row*width}px ${frame.column*height}px`,
+      backgroundPosition: `-${frame.row*width}px -${frame.column*height}px`,
       visibility: (hide) ? 'hidden' : 'visible'
     };
-
     return (
       <div
         className={customClass}
